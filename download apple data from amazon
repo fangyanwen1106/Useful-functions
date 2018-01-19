@@ -1,0 +1,104 @@
+## Download Apple Products from Amazon.com
+## https://www.amazon.com/s?ie=UTF8&page=1&rh=n%3A2407749011%2Ck%3AApple&page=1
+
+import re
+import pandas as pd
+import numpy as np
+from selenium import webdriver
+
+driver = webdriver.Chrome() ## Step2 Set up the Selenium server
+## Construct the links in a list
+baseurl1 = 'https://www.amazon.com/s?ie=UTF8&page='
+baseurl2 = '&rh=n%3A2407749011%2Ck%3AApple&page='
+pagen = np.arange(1,46) # page 1-45
+page_links =[]
+for n in pagen:
+    page_url = baseurl1+str(n)+baseurl2+str(n)
+    page_links.append(page_url)
+    
+    
+app_product_inf = {}  # create an empty dictionary to store the product information
+for i in range(45):
+    driver.implicitly_wait(10)
+    driver.get(page_links[i])
+    page_source = driver.page_source
+    r = re.compile(r'"result_\d+') # find the result_
+    match = r.search(page_source)
+    text = match.group()
+    start_num=int(re.findall(r'\d+',text)[0])
+    product_list = driver.find_element_by_css_selector('ul#s-results-list-atf').find_elements_by_css_selector("li.s-result-item.celwidget")
+    for j in range(len(product_list)):
+        result="page_"+str(i+1)+"result_"+str(start_num+j)  # name the product
+        Manufacturer=""
+        Display_Size = ""
+        Display_Type = ""
+        Display_Dimension = ""
+        Special_Feature = ""
+        Special_Offer = ""
+        Offer_Price=""
+        More_Offer = ""
+        Number_of_Review=""
+        Rating=""
+        id="result_"+str(start_num+j)
+        product = driver.find_element_by_id(id)
+        r = re.compile(r'[$]start_num?[0-9.]+\(.+\)')
+        match = r.search(product.text)
+        Product_tmp =product.text.split('\n')
+        if Product_tmp[0]=='Sponsored':
+            continue
+        if match:
+            More_Offer=match.group()
+        app_product_inf[result] = {}
+        Product_detail=Product_tmp[0]  # title=
+        Manufacturer=Product_tmp[1].replace('by ','')
+        for k in Product_tmp:
+            if k.find("Display Size")>-1:
+                Display_Size=k.replace('Display Size:','') #remove the title name
+            elif k.find("Display Type")>-1:
+                Display_Type=k.replace('Display Type:','')
+            elif k.find("Display Dimension")>-1:
+                Display_Dimension=k.replace('Display Dimension:','')
+            elif k.find("Special Feature")>-1:
+                Special_Feature=k.replace('Special Feature:','')
+            elif k.find("Special Offer")>-1:
+                Special_Offer=k.replace('Special Offer:','')
+        r = re.compile(r'<span class="a-icon-alt">\d.*</span>') #4.1 out of 5 stars
+        p = re.compile(r'<[^>]+>')
+        page_source=driver.page_source
+        page_source_list=page_source.split('"result_')
+        # print(page_source_list[j+1])
+        match = r.search(page_source_list[j+1])
+        if match:
+            Rating = p.sub("", match.group())
+        try:
+            price1 = product.find_element_by_class_name('sx-price-whole').text
+            price = product.find_element_by_class_name('sx-price-fractional').text
+            Offer_Price = "$" + price1 + "." + price
+        except:
+            Offer_Price=""
+        try:
+            Number_of_Review = product.find_element_by_css_selector('div.a-column.a-span5.a-span-last a.a-size-small.a-link-normal.a-text-normal').text
+        except:
+            Number_of_Review=""
+        app_product_inf[result]['Product_detail']=Product_detail
+        app_product_inf[result]["Display_Dimension"]=Display_Dimension
+        app_product_inf[result]["Display_Size"]=Display_Size
+        app_product_inf[result]["Display_Type"]=Display_Type
+        app_product_inf[result]["Manufacturer"]=Manufacturer
+        app_product_inf[result]["More_Offer"]=More_Offer
+        app_product_inf[result]["Number_of_Review"]=Number_of_Review
+        app_product_inf[result]["Offer_Price"]=Offer_Price
+        app_product_inf[result]["Special_Feature"]=Special_Feature
+        app_product_inf[result]["Special_Offer"]=Special_Offer
+        app_product_inf[result]["Rating"]=Rating
+    print('page ' + str(i+1) + ' is stored')
+    
+driver.close()
+
+
+## change the dictionary into a dataframe
+
+app_df = pd.DataFrame.from_dict(app_product_inf,orient='index')
+## app_df.head()
+## app_df.shape
+app_df.to_csv('apple_product_info.csv')
