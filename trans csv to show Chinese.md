@@ -2,7 +2,6 @@ import codecs
 import pandas as pd
 import numpy as np
 
-%cd E:\Tianchi-Competition\predict TangNiaoBing\dataset
 
 ## if csv file cannot show chinese words 
 ## transfer the unicode
