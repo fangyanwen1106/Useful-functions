@@ -1,6 +1,3 @@
-# Useful-functions
-# Some useful functions to solve some problems met in practice
-
 import codecs  
 import pandas as pd
 import numpy as np
@@ -25,11 +22,11 @@ def GBK_2_UTF8(gbkfile,utf8file):
     data = pd.read_csv(path,)  
     return data
 
-# gbkfile = 'd_train_20180102.csv'  raw data in gbk forms
-# utf8file = 'd_train_20180102_utf8.csv'  utf_8 forms
+## gbkfile = 'd_train_20180102.csv'  raw data in gbk forms
+## utf8file = 'd_train_20180102_utf8.csv'  utf_8 forms
 train_data = GBK_2_UTF8('d_train_20180102.csv','d_train_utf8.csv' )  
 train_data.to_csv('train_data.csv',encoding='utf_8_sig')  
-# train_data.csv is the csv file which can display chinese words properly
+## train_data.csv is the csv file which can display chinese words properly
 
 test_data = GBK_2_UTF8('d_test_A_20180102.csv','d_test_utf8.csv' )  
 test_data.to_csv('test_data.csv',encoding='utf_8_sig')  
